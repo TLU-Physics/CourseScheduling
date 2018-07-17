@@ -128,3 +128,14 @@ class AllConflicts:
     def print(self):
         for conflict in self.allConflicts:
             conflict.print()
+
+
+class TimeConflict:
+    def __init__(self, time1, time2):
+        if time1 > time2:
+            time1, time2 = time2, time1
+        self.time1 = time1
+        self.time2 = time2
+    
+    def print(self):
+        print(self.time1, 'and', self.time2, 'conflict')
