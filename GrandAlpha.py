@@ -256,7 +256,9 @@ class GrandAlpha:
     
     def exportSch(self, filename, sch):
         outfile = open(filename, 'w')
-        for facCourses in self.allFacCourses.allFacCourses:
+        facCoursesList = self.allFacCourses.allFacCourses.copy()
+        facCoursesList.sort(key = lambda facCourses: facCourses.dept + facCourses.name)
+        for facCourses in facCoursesList:
             for course in facCourses.courses:
                 s = facCourses.name + ', ' + course + ', ' + sch[course] + '\n'
                 outfile.write(s)

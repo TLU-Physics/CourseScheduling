@@ -4,12 +4,30 @@ class FacultyCourses:
         elements = line.split(',')
         self.name = elements.pop(0)
         self.courses = elements.copy()
+        firstchar = self.courses[0][0]
+        if firstchar == 'C':
+            secondchar = self.courses[0][1]
+            if secondchar == 'S':
+                self.dept = 'Computer Science'
+            else:
+                self.dept = 'Chemistry'
+        elif firstchar == 'P':
+            self.dept = 'Physics'
+        elif firstchar == 'M' or firstchar == 'S':
+            self.dept = 'Math'
+        elif firstchar == 'I':
+            self.dept = 'Computer Science'
+        elif firstchar == 'B':
+            self.dept = 'Biology'
+        else:
+            self.dept = 'Unknown'
+            print('Unknown department for', self.name)
     
     def contains(self, course):
         return course in self.courses
     
     def print(self):
-        print(self.name, 'has courses ', end = '')
+        print(self.name, 'in', self.dept, 'has courses ', end = '')
         for course in self.courses:
             print(course, ' ', end = '', sep = '')
 
