@@ -5,16 +5,26 @@ from DataStructures import *
 
 class GrandAlpha:
     def __init__(self, facCourseFilename, courseTimesFilename, conflictsFilename, timeConflictsFilename):
+        # load the valid time labels (for error checking)
+        validTimesFilename = 'ValidTimes.txt'
+        validTimesFile = open(validTimesFilename, 'r')
+        self.validTimes = set()
+        for line in validTimesFile:
+            if len(line.strip()) > 0:
+                self.validTimes.add(line.strip())
+        
         # load the information about what possible times each course can be taught at
         courseTimesFile = open(courseTimesFilename, 'r')
         self.allCourseTimes = AllCourseTimes()
         for line in courseTimesFile:
             if len(line.strip()) > 0:
-                self.allCourseTimes.append(CourseTimes(line))
+                courseTimes = CourseTimes(line)
+                for t in courseTimes.times:
+                    if t not in self.validTimes:
+                        raise ValueError(t + ' (for ' + courseTimes.name + ') is not in the list of valid times')
+                self.allCourseTimes.append(courseTimes)
 
         courseTimesFile.close()
-        
-        # TODO: check that there have not been typos in the list of times given?
         
         allCoursesList = self.allCourseTimes.getAllCourses()
         
@@ -56,12 +66,10 @@ class GrandAlpha:
         for line in timeConflictsFile:
             if len(line.strip()) > 0:
                 els = line.strip().split(',')
-#                if els[0] not in allTimesList:
-#                    print('The time', els[0], 'is not in the master list of times')
-#                    raise Exception
-#                if els[1] not in allTimesList:
-#                    print('The time', els[1], 'is not in the master list of times')
-#                    raise Exception
+                if els[0] not in self.validTimes:
+                    raise ValueError(els[0] + ' is not in the list of valid times (' + line.strip() + ')')
+                if els[1] not in self.validTimes:
+                    raise ValueError(els[1] + ' is not in the list of valid times (' + line.strip() + ')')
                 self.allTimeConflicts.append(TimeConflict(els[0], els[1]))
 
         timeConflictsFile.close()
@@ -258,7 +266,11 @@ class GrandAlpha:
         outfile = open(filename, 'w')
         facCoursesList = self.allFacCourses.allFacCourses.copy()
         facCoursesList.sort(key = lambda facCourses: facCourses.dept + facCourses.name)
+        currentDept = facCoursesList[0].dept
         for facCourses in facCoursesList:
+            if facCourses.dept != currentDept:
+                outfile.write('\n')
+                currentDept = facCourses.dept
             for course in facCourses.courses:
                 s = facCourses.name + ', ' + course + ', ' + sch[course] + '\n'
                 outfile.write(s)
@@ -274,6 +286,18 @@ class GrandAlpha:
                 sch[linesplit[1].strip()] = linesplit[2].strip()
 
         schFile.close()
+        
+        # for each faculty member, get all courses and test every combination for a conflict
+        for facCourses in self.allFacCourses.allFacCourses:
+            for i in range(len(facCourses.courses)):
+                for j in range(i + 1, len(facCourses.courses)):
+                    time1 = sch[facCourses.courses[i]]
+                    if time1 not in self.validTimes:
+                        raise ValueError(time1 + ' (for ' + facCourses.courses[i] + ') is not in the list of valid times')
+                    time2 = sch[facCourses.courses[j]]
+                    if time2 not in self.validTimes:
+                        raise ValueError(time2 + ' (for ' + facCourses.courses[j] + ') is not in the list of valid times')
+                    if self.doTimesConflict(time1, time2):
+                        print('WARNING:', facCourses.name, 'has a conflict between', facCourses.courses[i], 'and', facCourses.courses[j], 'in the imported schedule.')
+        
         return sch
-    
-    # TODO: What if import contains a faculty conflict?
