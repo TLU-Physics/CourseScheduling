@@ -226,13 +226,13 @@ class GrandAlpha:
         
         return totalPenalties
     
-    def anneal(self, sch):
-        Tmax = 1000.0
+    def anneal(self, initialsch, Tinitial):
         Tmin = 0.1
         tau = 1e4
 
         t = 0
-        T = Tmax
+        T = Tinitial
+        sch = initialsch.copy()
         penalties = self.accumulatePenalties(sch)
         while T > Tmin:
             
@@ -241,10 +241,10 @@ class GrandAlpha:
                 print('Steps taken:', t)
 
             # Cooling
-            T = Tmax*exp(-t/tau)
+            T = Tinitial * exp(-t/tau)
 
             schnew = self.StepSchedule(sch)
-            penaltiesnew = self.accumulatePenalties(sch)
+            penaltiesnew = self.accumulatePenalties(schnew)
             deltaPenalties = penaltiesnew - penalties
 
             # accept the new sch according to Boltzmann factor
@@ -255,6 +255,23 @@ class GrandAlpha:
             t += 1
         
         return sch
+    
+    def findOptimalSchedule(self):
+        Tinitial = 1000
+        
+        trials = 5
+        optpenalties = 99999
+        for i in range(trials):
+            
+            initialsch = self.CreateRandomSchedule()
+            schnew = self.anneal(initialsch, Tinitial)
+            penaltiesnew = self.accumulatePenalties(schnew)
+            print('Trial', i + 1, 'gave a schedule with', penalties, 'penalties')
+            if penaltiesnew < optpenalties:
+                optsch = schnew
+                optpenalties = penaltiesnew
+        
+        return optsch
 
     def summary(self, sch):
         penalties = self.accumulatePenalties(sch)
