@@ -55,7 +55,7 @@ class GrandAlpha:
                 if els[1] not in allCoursesList:
                     print('The course', els[1], 'is not in the master list of courses')
                     raise Exception
-                self.allConflicts.append(els[0], els[1], int(els[2]))
+                self.allConflicts.add(els[0], els[1], els[2])
 
         conflictsFile.close()
 
@@ -318,3 +318,32 @@ class GrandAlpha:
                         print('WARNING:', facCourses.name, 'has a conflict between', facCourses.courses[i], 'and', facCourses.courses[j], 'in the imported schedule.')
         
         return sch
+
+    def importConflictsFromStudentSurveys(studentCourseFilename, outFilename, allConflicts = None, allCourseTimes = None):
+        studentCourseFile = open(studentCourseFilename, 'r')
+        allStudentCourses = []
+        for line in studentCourseFile:
+            if len(line.strip()) > 0:
+                studentCourses = StudentCourses(line)
+                if allCourseTimes != None:
+                    for course in studentCourses.courses:
+                        if course not in allCourseTimes.allCourseTimes:
+                            raise ValueError('The course ' + course + ' is not in the master list of courses')
+                allStudentCourses.append(studentCourses)
+
+        studentCourseFile.close()
+        
+        if allConflicts == None:
+            allConflicts = AllConflicts()
+        
+        for studentCourses in allStudentCourses:
+            courses = studentCourses.courses
+            for i in range(len(courses)):
+                for j in range(i + 1, len(courses)):
+                    allConflicts.add(courses[i], courses[j], studentCourses.priority)
+        
+        outFile = open(outFilename, 'w')
+        for conflict in allConflicts.allConflicts:
+            outFile.write(conflict.course1 + ',' + conflict.course2 + ',' + str(conflict.priority) + '\n')
+        
+        outFile.close()

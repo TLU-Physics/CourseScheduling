@@ -122,7 +122,7 @@ class Conflict:
             course1, course2 = course2, course1
         self.course1 = course1
         self.course2 = course2
-        self.priority = priority
+        self.priority = int(priority)
     
     def print(self):
         print(self.course1, 'and', self.course2, 'conflict with priority', self.priority)
@@ -132,8 +132,20 @@ class AllConflicts:
     def __init__(self):
         self.allConflicts = []
     
-    def append(self, course1, course2, priority):
-        self.allConflicts.append(Conflict(course1, course2, priority))
+    def add(self, course1, course2, priority):
+        conflict = self.getConflict(course1, course2)
+        if conflict == None:
+            self.allConflicts.append(Conflict(course1, course2, priority))
+        else:
+            conflict.priority += int(priority)
+
+    def getConflict(self, course1, course2):
+        if course1 > course2:
+            course1, course2 = course2, course1
+        for conflict in self.allConflicts:
+            if conflict.course1 == course1 and conflict.course2 == course2:
+                return conflict
+        return None
     
     def getPenalty(self, course1, course2):
         if course1 > course2:
@@ -157,3 +169,18 @@ class TimeConflict:
     
     def print(self):
         print(self.time1, 'and', self.time2, 'conflict')
+
+
+class StudentCourses:
+    def __init__(self, line):
+        line = line.strip()
+        elements = line.split(',')
+        self.name = elements.pop(0)
+        self.priority = int(elements.pop(0))
+        self.courses = elements.copy()
+    
+    def print(self):
+        print(self.name, 'with priority', self.priority, 'has courses ', end = '')
+        for course in self.courses:
+            print(course, ' ', end = '', sep = '')
+        print()
