@@ -10,14 +10,14 @@ class GrandAlpha:
         validTimesFile = open(validTimesFilename, 'r')
         self.validTimes = set()
         for line in validTimesFile:
-            if len(line.strip()) > 0:
+            if len(line.strip()) > 0 and line.strip()[0] != '#':
                 self.validTimes.add(line.strip())
         
         # load the information about what possible times each course can be taught at
         courseTimesFile = open(courseTimesFilename, 'r')
         self.allCourseTimes = AllCourseTimes()
         for line in courseTimesFile:
-            if len(line.strip()) > 0:
+            if len(line.strip()) > 0 and line.strip()[0] != '#':
                 courseTimes = CourseTimes(line)
                 for t in courseTimes.times:
                     if t not in self.validTimes:
@@ -32,7 +32,7 @@ class GrandAlpha:
         facCourseFile = open(facCourseFilename, 'r')
         self.allFacCourses = AllFacultyCourses() # this will be the list of faculty schedules
         for line in facCourseFile:
-            if len(line.strip()) > 0:
+            if len(line.strip()) > 0 and line.strip()[0] != '#':
                 facCourses = FacultyCourses(line)
                 for course in facCourses.courses:
                     if course not in allCoursesList:
@@ -47,7 +47,7 @@ class GrandAlpha:
         conflictsFile = open(conflictsFilename, 'r')
         self.allConflicts = AllConflicts()
         for line in conflictsFile:
-            if len(line.strip()) > 0:
+            if len(line.strip()) > 0 and line.strip()[0] != '#':
                 els = line.strip().split(',')
                 if els[0] not in allCoursesList:
                     print('The course', els[0], 'is not in the master list of courses')
@@ -64,7 +64,7 @@ class GrandAlpha:
         timeConflictsFile = open(timeConflictsFilename, 'r')
         self.allTimeConflicts = []
         for line in timeConflictsFile:
-            if len(line.strip()) > 0:
+            if len(line.strip()) > 0 and line.strip()[0] != '#':
                 els = line.strip().split(',')
                 if els[0] not in self.validTimes:
                     raise ValueError(els[0] + ' is not in the list of valid times (' + line.strip() + ')')
@@ -101,6 +101,8 @@ class GrandAlpha:
         """
         
         # TODO: take into account multiple sections of same class
+        # should be okay for now because I am only listing one possiblity for courses with
+        # multiple sections
         sch = {}
         for courseTimes in self.allCourseTimes.allCourseTimes:
             # build a list of other times that should be excluded based on the
@@ -170,6 +172,8 @@ class GrandAlpha:
                 raise Exception
             
             # TODO: take into account multiple sections of same class
+            # should be okay for now because I am only listing one possiblity for courses with
+            # multiple sections
 
             courseToChange = choice(list(sch.keys()))
             courseTimes = self.allCourseTimes.getCourseTimes(courseToChange)
@@ -224,6 +228,9 @@ class GrandAlpha:
                     for course2 in inv_sch[timeConflict.time2]:
                         totalPenalties += self.allConflicts.getPenalty(course1, course2)
         
+        # multiple sections are handled within the AllConflicts class
+        # the getPenalty function has special behavior for multi-section courses
+        
         return totalPenalties
     
     def anneal(self, initialsch, Tinitial):
@@ -237,7 +244,7 @@ class GrandAlpha:
         while T > Tmin:
             
             # show progress
-            if t % 100 == 0:
+            if t % 1000 == 0:
                 print('Steps taken:', t)
 
             # Cooling
@@ -257,7 +264,7 @@ class GrandAlpha:
         return sch
     
     def findOptimalSchedule(self):
-        Tinitial = 1000
+        Tinitial = 200
         
         trials = 5
         optpenalties = 99999

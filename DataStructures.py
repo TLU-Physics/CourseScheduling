@@ -78,11 +78,17 @@ class CourseTimes:
         line = line.strip()
         elements = line.split(',')
         self.name = elements.pop(0)
-        self.maxsize = elements.pop(0)
+        #self.maxsize = elements.pop(0)
         self.times = elements.copy()
     
     def contains(self, time):
         return time in self.times
+    
+    def isCourseNameMultiSection(name):
+        return '-' in name
+    
+    def isCourseMultiSection(self):
+        return CourseTimes.isCourseNameMultiSection(self.name)
     
     def print(self):
         print(self.name, 'has available times ', end = '')
@@ -148,6 +154,10 @@ class AllConflicts:
         return None
     
     def getPenalty(self, course1, course2):
+        # for tests that involve courses that have more than one section, assume no conflicts
+        if CourseTimes.isCourseNameMultiSection(course1) or CourseTimes.isCourseNameMultiSection(course2):
+            return 0
+        
         if course1 > course2:
             course1, course2 = course2, course1
         for conflict in self.allConflicts:
