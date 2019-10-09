@@ -50,11 +50,13 @@ class GrandAlpha:
             if len(line.strip()) > 0 and line.strip()[0] != '#':
                 els = line.strip().split(',')
                 if els[0] not in allCoursesList:
-                    print('The course', els[0], 'is not in the master list of courses')
-                    raise Exception
+                    if els[0] + '-1' not in allCoursesList:
+                        print('The course', els[0], 'is not in the master list of courses')
+                        raise Exception
                 if els[1] not in allCoursesList:
-                    print('The course', els[1], 'is not in the master list of courses')
-                    raise Exception
+                    if els[1] + '-1' not in allCoursesList:
+                        print('The course', els[1], 'is not in the master list of courses')
+                        raise Exception
                 self.allConflicts.add(els[0], els[1], els[2])
 
         conflictsFile.close()
@@ -203,7 +205,7 @@ class GrandAlpha:
                     
             if len(possibletimes) != 0:
                 sch[courseToChange] = choice(possibletimes)
-                print(tryCount)
+                #print(tryCount)
                 return sch
 
     def accumulatePenalties(self, sch):
@@ -244,8 +246,8 @@ class GrandAlpha:
         while T > Tmin:
             
             # show progress
-            if t % 1000 == 0:
-                print('Steps taken:', t)
+            if t % 5000 == 0:
+                print('Steps taken:', t, 'penalties:', penalties)
 
             # Cooling
             T = Tinitial * exp(-t/tau)
@@ -264,7 +266,7 @@ class GrandAlpha:
         return sch
     
     def findOptimalSchedule(self):
-        Tinitial = 200
+        Tinitial = 100
         
         trials = 5
         optpenalties = 99999
@@ -273,10 +275,13 @@ class GrandAlpha:
             initialsch = self.CreateRandomSchedule()
             schnew = self.anneal(initialsch, Tinitial)
             penaltiesnew = self.accumulatePenalties(schnew)
-            print('Trial', i + 1, 'gave a schedule with', penalties, 'penalties')
+            print('Trial', i + 1, 'gave a schedule with', penaltiesnew, 'penalties')
             if penaltiesnew < optpenalties:
                 optsch = schnew
                 optpenalties = penaltiesnew
+            if optpenalties == 0:
+                print("This schedule has 0 penalties. Finishing.")
+                break
         
         return optsch
 
@@ -296,9 +301,31 @@ class GrandAlpha:
                 outfile.write('\n')
                 currentDept = facCourses.dept
             for course in facCourses.courses:
-                s = facCourses.name + ', ' + course + ', ' + sch[course] + '\n'
+                s = facCourses.name + ',' + course + ',' + sch[course] + '\n'
                 outfile.write(s)
         
+        outfile.close()
+    
+    def exportSchDetail(self, filename, sch):
+        outfile = open(filename, 'w')
+        s = 'crs_cde,cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
+        outfile.write(s)
+        
+        allCoursesList = self.allCourseTimes.getAllCourses().copy()
+        allCoursesList.sort(key = lambda course: CourseTimes.getCourseDept(course) + course)
+        currentDept = CourseTimes.getCourseDept(allCoursesList[0])
+        
+        for course in allCoursesList:
+            if CourseTimes.getCourseDept(course) != currentDept:
+                outfile.write('\n')
+                currentDept = CourseTimes.getCourseDept(course)
+            
+            course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + ' ' + CourseTimes.getCourseSectionNum(course)
+            day, start, end = CourseTimes.getDayTime(sch[course])
+            instructor = self.allFacCourses.getFacNameByCourse(course)
+            s = course_code + ',,,' + day + ',' + start + ',' + end + ',,,' + instructor + ',\n'
+            outfile.write(s)
+            
         outfile.close()
     
     def importSch(self, filename):
@@ -307,7 +334,8 @@ class GrandAlpha:
         for line in schFile:
             if len(line.strip()) > 0:
                 linesplit = line.strip().split(',')
-                sch[linesplit[1].strip()] = linesplit[2].strip()
+                if len(linesplit[1]) > 0:
+                    sch[linesplit[1].strip()] = linesplit[2].strip()
 
         schFile.close()
         

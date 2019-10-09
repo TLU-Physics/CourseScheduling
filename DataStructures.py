@@ -5,6 +5,7 @@ class FacultyCourses:
         self.name = elements.pop(0)
         self.courses = elements.copy()
         firstchar = self.courses[0][0]
+        # TODO: tie this to helper code that has been added
         if firstchar == 'C':
             secondchar = self.courses[0][1]
             if secondchar == 'S':
@@ -13,7 +14,7 @@ class FacultyCourses:
                 self.dept = 'Chemistry'
         elif firstchar == 'P':
             self.dept = 'Physics'
-        elif firstchar == 'M' or firstchar == 'S':
+        elif firstchar == 'M' or firstchar == 'S' or firstchar == 'D':
             self.dept = 'Math'
         elif firstchar == 'I':
             self.dept = 'Computer Science'
@@ -89,6 +90,143 @@ class CourseTimes:
     
     def isCourseMultiSection(self):
         return CourseTimes.isCourseNameMultiSection(self.name)
+    
+    def getCourseNum(name):
+        numstart = 1
+        if name[numstart].isalpha():
+            numstart += 1
+        hyphenpos = name.find('-')
+        if hyphenpos > 0:
+            return name[numstart:hyphenpos]
+        else:
+            return name[numstart:]
+    
+    def getCourseSectionNum(name):
+        hyphenpos = name.find('-')
+        if hyphenpos > 0:
+            return '0' + name[hyphenpos + 1]
+        else:
+            return '01'
+    
+    def getCourseDept(name):
+        firstchar = name[0]
+        if firstchar == 'C':
+            secondchar = name[1]
+            if secondchar == 'S':
+                dept = 'Computer Science'
+            else:
+                dept = 'Chemistry'
+        elif firstchar == 'P':
+            secondchar = name[1]
+            if secondchar == 'H':
+                dept = 'Biology'
+            else:
+                dept = 'Physics'
+        elif firstchar == 'M' or firstchar == 'S' or firstchar == 'D':
+            dept = 'Math'
+        elif firstchar == 'I':
+            dept = 'Computer Science'
+        elif firstchar == 'B':
+            dept = 'Biology'
+        else:
+            dept = 'Unknown'
+            print('Unknown department with code', firstchar)
+        
+        return dept
+    
+    def getCourseDeptCode(name):
+        firstchar = name[0]
+        if firstchar == 'C':
+            secondchar = name[1]
+            if secondchar == 'S':
+                code = 'CSIS'
+            else:
+                code = 'CHEM'
+        elif firstchar == 'P':
+            secondchar = name[1]
+            if secondchar == 'H':
+                code = 'PHIL'
+            else:
+                code = 'PHYS'
+        elif firstchar == 'M':
+            code = 'MATH'
+        elif firstchar == 'S':
+            code = 'STAT'
+        elif firstchar == 'D':
+            code = 'DAST'
+        elif firstchar == 'I':
+            code = 'ISYS'
+        elif firstchar == 'B':
+            code = 'BIOL'
+        else:
+            code = 'Unknown'
+            print('Unknown department for code', firstchar)
+        
+        return code
+    
+    def getDayTime(time):
+        if time == 'MWF8':
+            day = 'MWF'; start = '8:00AM'; end = '8:50AM'
+        if time == 'MWF9':
+            day = 'MWF'; start = '9:00AM'; end = '9:50AM'
+        if time == 'MWF10:30':
+            day = 'MWF'; start = '10:30AM'; end = '11:20AM'
+        if time == 'MWF11:30':
+            day = 'MWF'; start = '11:30AM'; end = '12:20PM'
+        if time == 'MWF1':
+            day = 'MWF'; start = '1:00PM'; end = '1:50PM'
+        if time == 'MWF2:30':
+            day = 'MWF'; start = '2:30PM'; end = '3:20PM'
+        if time == 'MW1':
+            day = 'MW'; start = '1:00PM'; end = '2:15PM'
+        if time == 'MW2:30':
+            day = 'MW'; start = '2:30PM'; end = '3:45PM'
+        if time == 'M1-4':
+            day = 'M'; start = '1:00PM'; end = '4:00PM'
+        if time == 'M1-5':
+            day = 'M'; start = '1:00PM'; end = '5:00PM'
+        if time == 'W1-4':
+            day = 'W'; start = '1:00PM'; end = '4:00PM'
+        if time == 'W1-5':
+            day = 'W'; start = '1:00PM'; end = '5:00PM'
+        if time == 'TR8':
+            day = 'TR'; start = '8:00AM'; end = '9:15AM'
+        if time == 'TR10:30':
+            day = 'TR'; start = '10:30AM'; end = '11:45AM'
+        if time == 'TR1':
+            day = 'TR'; start = '1:00PM'; end = '2:15PM'
+        if time == 'TR2:30':
+            day = 'TR'; start = '2:30PM'; end = '3:45PM'
+        if time == 'T1-4':
+            day = 'T'; start = '1:00PM'; end = '4:00PM'
+        if time == 'T1-5':
+            day = 'T'; start = '1:00PM'; end = '5:00PM'
+        if time == 'R1-4':
+            day = 'R'; start = '1:00PM'; end = '4:00PM'
+        if time == 'R1-5':
+            day = 'R'; start = '1:00PM'; end = '5:00PM'
+        if time == 'MW4':
+            day = 'MW'; start = '4:00PM'; end = '5:15PM'
+        if time == 'MWF10:30-12:20':
+            day = 'MWF'; start = '10:30AM'; end = '12:20PM'
+        if time == 'F1':
+            day = 'F'; start = '1:00PM'; end = '1:50PM'
+        if time == 'F1:30':
+            day = 'F'; start = '1:30PM'; end = '3:30PM'
+        if time == 'F2':
+            day = 'F'; start = '2:00PM'; end = '2:50PM'
+        if time == 'M6':
+            day = 'M'; start = '6:00PM'; end = '?'
+        if time == 'T6':
+            day = 'T'; start = '6:00PM'; end = '?'
+        if time == 'W6':
+            day = 'W'; start = '6:00PM'; end = '?'
+        if time == 'W8':
+            day = 'W'; start = '8:00AM'; end = '8:50AM'
+        if time == 'T4':
+            day = 'T'; start = '4:00PM'; end = '4:50PM'
+        
+        return day, start, end
     
     def print(self):
         print(self.name, 'has available times ', end = '')
