@@ -13,6 +13,18 @@ class GrandAlpha:
             if len(line.strip()) > 0 and line.strip()[0] != '#':
                 self.validTimes.add(line.strip())
         
+        # load the course names
+        courseNamesFilename = 'CourseNames.txt'
+        courseNamesFile = open(courseNamesFilename, 'r')
+        self.courseNames = {}
+        for line in courseNamesFile:
+            linest = line.strip()
+            if len(linest) > 0 and linest[0] != '#':
+                # careful about commas inside the course name
+                commapos = linest.find(',')
+                courseid = linest[:commapos]
+                self.courseNames[courseid] = linest[commapos + 1:]
+        
         # load the information about what possible times each course can be taught at
         courseTimesFile = open(courseTimesFilename, 'r')
         self.allCourseTimes = AllCourseTimes()
@@ -57,7 +69,10 @@ class GrandAlpha:
                     if els[1] + '-1' not in allCoursesList:
                         print('The course', els[1], 'is not in the master list of courses')
                         raise Exception
-                self.allConflicts.add(els[0], els[1], els[2])
+                if len(els) == 2:
+                    self.allConflicts.add(els[0], els[1])
+                else:
+                    self.allConflicts.add(els[0], els[1], els[2])
 
         conflictsFile.close()
 
@@ -208,7 +223,7 @@ class GrandAlpha:
                 #print(tryCount)
                 return sch
 
-    def accumulatePenalties(self, sch):
+    def accumulatePenalties(self, sch, verbose = False):
         # get a dict where the times are the keys and the courses are the values
         inv_sch = {}
         for k, v in sch.items():
@@ -220,7 +235,10 @@ class GrandAlpha:
         for time, courses in inv_sch.items():
             for i in range(len(courses)):
                 for j in range(i + 1, len(courses)):
-                    totalPenalties += self.allConflicts.getPenalty(courses[i], courses[j])
+                    penalties = self.allConflicts.getPenalty(courses[i], courses[j])
+                    totalPenalties += penalties
+                    if penalties > 0 and verbose:
+                        print(courses[i], 'and', courses[j], 'conflict with penalty', penalties)
         
         # for each 2 times that overlap, find all courses in each of the 2 groups
         # and test every possible pair
@@ -228,7 +246,10 @@ class GrandAlpha:
             if timeConflict.time1 in inv_sch and timeConflict.time2 in inv_sch:
                 for course1 in inv_sch[timeConflict.time1]:
                     for course2 in inv_sch[timeConflict.time2]:
-                        totalPenalties += self.allConflicts.getPenalty(course1, course2)
+                        penalties = self.allConflicts.getPenalty(course1, course2)
+                        totalPenalties += penalties
+                        if penalties > 0 and verbose:
+                            print(course1, 'and', course2, 'conflict with penalty', penalties)
         
         # multiple sections are handled within the AllConflicts class
         # the getPenalty function has special behavior for multi-section courses
@@ -265,16 +286,15 @@ class GrandAlpha:
         
         return sch
     
-    def findOptimalSchedule(self):
+    def findOptimalSchedule(self, trials):
         Tinitial = 100
         
-        trials = 5
         optpenalties = 99999
         for i in range(trials):
             
             initialsch = self.CreateRandomSchedule()
             schnew = self.anneal(initialsch, Tinitial)
-            penaltiesnew = self.accumulatePenalties(schnew)
+            penaltiesnew = self.accumulatePenalties(schnew, verbose = True)
             print('Trial', i + 1, 'gave a schedule with', penaltiesnew, 'penalties')
             if penaltiesnew < optpenalties:
                 optsch = schnew
@@ -286,7 +306,7 @@ class GrandAlpha:
         return optsch
 
     def summary(self, sch):
-        penalties = self.accumulatePenalties(sch)
+        penalties = self.accumulatePenalties(sch, verbose = True)
         print('The total number of penalties for the schedule is', penalties)
         
         # TODO: need more detail - like where are the penalties coming from?
@@ -308,22 +328,26 @@ class GrandAlpha:
     
     def exportSchDetail(self, filename, sch):
         outfile = open(filename, 'w')
-        s = 'crs_cde,cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
+        s = 'category,crs_cde,cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
         outfile.write(s)
         
         allCoursesList = self.allCourseTimes.getAllCourses().copy()
         allCoursesList.sort(key = lambda course: CourseTimes.getCourseDept(course) + course)
-        currentDept = CourseTimes.getCourseDept(allCoursesList[0])
+        #currentDept = CourseTimes.getCourseDept(allCoursesList[0])
         
         for course in allCoursesList:
-            if CourseTimes.getCourseDept(course) != currentDept:
-                outfile.write('\n')
-                currentDept = CourseTimes.getCourseDept(course)
+            #if CourseTimes.getCourseDept(course) != currentDept:
+            #    outfile.write('\n')
+            #    currentDept = CourseTimes.getCourseDept(course)
+            
+            courseDept = CourseTimes.getCourseDept(course)
+            courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
             
             course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + ' ' + CourseTimes.getCourseSectionNum(course)
+            course_name = self.courseNames[courseid]
             day, start, end = CourseTimes.getDayTime(sch[course])
             instructor = self.allFacCourses.getFacNameByCourse(course)
-            s = course_code + ',,,' + day + ',' + start + ',' + end + ',,,' + instructor + ',\n'
+            s = courseDept + ',' + course_code + ',,' + course_name + ',' + day + ',' + start + ',' + end + ',,,' + instructor + ',\n'
             outfile.write(s)
             
         outfile.close()

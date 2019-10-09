@@ -4,26 +4,8 @@ class FacultyCourses:
         elements = line.split(',')
         self.name = elements.pop(0)
         self.courses = elements.copy()
-        firstchar = self.courses[0][0]
-        # TODO: tie this to helper code that has been added
-        if firstchar == 'C':
-            secondchar = self.courses[0][1]
-            if secondchar == 'S':
-                self.dept = 'Computer Science'
-            else:
-                self.dept = 'Chemistry'
-        elif firstchar == 'P':
-            self.dept = 'Physics'
-        elif firstchar == 'M' or firstchar == 'S' or firstchar == 'D':
-            self.dept = 'Math'
-        elif firstchar == 'I':
-            self.dept = 'Computer Science'
-        elif firstchar == 'B':
-            self.dept = 'Biology'
-        else:
-            self.dept = 'Unknown'
-            print('Unknown department for', self.name)
-    
+        self.dept = CourseTimes.getCourseDept(self.courses[0])
+        
     def contains(self, course):
         return course in self.courses
     
@@ -54,6 +36,7 @@ class AllFacultyCourses:
         for facCourses in self.allFacCourses:
             if facCourses.contains(course):
                 return facCourses
+        print('There are no faculty assigned to teach ', course, '!')
         return None
     
     def getFacNameByCourse(self, course):
@@ -92,9 +75,7 @@ class CourseTimes:
         return CourseTimes.isCourseNameMultiSection(self.name)
     
     def getCourseNum(name):
-        numstart = 1
-        if name[numstart].isalpha():
-            numstart += 1
+        numstart = 4
         hyphenpos = name.find('-')
         if hyphenpos > 0:
             return name[numstart:hyphenpos]
@@ -109,122 +90,115 @@ class CourseTimes:
             return '01'
     
     def getCourseDept(name):
-        firstchar = name[0]
-        if firstchar == 'C':
-            secondchar = name[1]
-            if secondchar == 'S':
-                dept = 'Computer Science'
-            else:
-                dept = 'Chemistry'
-        elif firstchar == 'P':
-            secondchar = name[1]
-            if secondchar == 'H':
-                dept = 'Biology'
-            else:
-                dept = 'Physics'
-        elif firstchar == 'M' or firstchar == 'S' or firstchar == 'D':
-            dept = 'Math'
-        elif firstchar == 'I':
+        code = CourseTimes.getCourseDeptCode(name)
+        if code == 'CSCI' or code == 'ISYS':
             dept = 'Computer Science'
-        elif firstchar == 'B':
+        elif code == 'CHEM' or code == 'NSCI':
+            dept = 'Chemistry'
+        elif code == 'PHYS':
+            dept = 'Physics'
+        elif code == 'MATH' or code == 'STAT' or code == 'DAST' or code == 'DAIC':
+            dept = 'Math'
+        elif code == 'BIOL' or code == 'ENVS':
+            dept = 'Biology'
+        elif code == 'FREX' or code == 'PHIL':
             dept = 'Biology'
         else:
             dept = 'Unknown'
-            print('Unknown department with code', firstchar)
+            print('Unknown department with code', code)
         
         return dept
     
     def getCourseDeptCode(name):
-        firstchar = name[0]
-        if firstchar == 'C':
-            secondchar = name[1]
-            if secondchar == 'S':
-                code = 'CSIS'
-            else:
-                code = 'CHEM'
-        elif firstchar == 'P':
-            secondchar = name[1]
-            if secondchar == 'H':
-                code = 'PHIL'
-            else:
-                code = 'PHYS'
-        elif firstchar == 'M':
-            code = 'MATH'
-        elif firstchar == 'S':
-            code = 'STAT'
-        elif firstchar == 'D':
-            code = 'DAST'
-        elif firstchar == 'I':
-            code = 'ISYS'
-        elif firstchar == 'B':
-            code = 'BIOL'
-        else:
-            code = 'Unknown'
-            print('Unknown department for code', firstchar)
+        code = name[0:4]
         
         return code
     
     def getDayTime(time):
+        # TODO: math has some 4 hour courses that I need to adjust the time for (see Reza email 2/20/2019)
         if time == 'MWF8':
             day = 'MWF'; start = '8:00AM'; end = '8:50AM'
-        if time == 'MWF9':
+        elif time == 'MWF9':
             day = 'MWF'; start = '9:00AM'; end = '9:50AM'
-        if time == 'MWF10:30':
+        elif time == 'MWF10:30':
             day = 'MWF'; start = '10:30AM'; end = '11:20AM'
-        if time == 'MWF11:30':
+        elif time == 'MWF11:30':
             day = 'MWF'; start = '11:30AM'; end = '12:20PM'
-        if time == 'MWF1':
+        elif time == 'MW8':
+            day = 'MW'; start = '8:00AM'; end = '8:50AM'
+        elif time == 'MW9':
+            day = 'MW'; start = '9:00AM'; end = '9:50AM'
+        elif time == 'MW10:30':
+            day = 'MW'; start = '10:30AM'; end = '11:20AM'
+        elif time == 'MW11:30':
+            day = 'MW'; start = '11:30AM'; end = '12:20PM'
+        elif time == 'MWF1':
             day = 'MWF'; start = '1:00PM'; end = '1:50PM'
-        if time == 'MWF2:30':
+        elif time == 'MWF2:30':
             day = 'MWF'; start = '2:30PM'; end = '3:20PM'
-        if time == 'MW1':
+        elif time == 'MW1':
             day = 'MW'; start = '1:00PM'; end = '2:15PM'
-        if time == 'MW2:30':
+        elif time == 'MW2:30':
             day = 'MW'; start = '2:30PM'; end = '3:45PM'
-        if time == 'M1-4':
+        elif time == 'M1-4':
             day = 'M'; start = '1:00PM'; end = '4:00PM'
-        if time == 'M1-5':
+        elif time == 'M1-5':
             day = 'M'; start = '1:00PM'; end = '5:00PM'
-        if time == 'W1-4':
+        elif time == 'W1-4':
             day = 'W'; start = '1:00PM'; end = '4:00PM'
-        if time == 'W1-5':
+        elif time == 'W1-5':
             day = 'W'; start = '1:00PM'; end = '5:00PM'
-        if time == 'TR8':
+        elif time == 'TR8':
             day = 'TR'; start = '8:00AM'; end = '9:15AM'
-        if time == 'TR10:30':
+        elif time == 'TR10:30':
             day = 'TR'; start = '10:30AM'; end = '11:45AM'
-        if time == 'TR1':
+        elif time == 'TR1':
             day = 'TR'; start = '1:00PM'; end = '2:15PM'
-        if time == 'TR2:30':
+        elif time == 'TR2:30':
             day = 'TR'; start = '2:30PM'; end = '3:45PM'
-        if time == 'T1-4':
+        elif time == 'T1-4':
             day = 'T'; start = '1:00PM'; end = '4:00PM'
-        if time == 'T1-5':
+        elif time == 'T1-5':
             day = 'T'; start = '1:00PM'; end = '5:00PM'
-        if time == 'R1-4':
+        elif time == 'R1-4':
             day = 'R'; start = '1:00PM'; end = '4:00PM'
-        if time == 'R1-5':
+        elif time == 'R1-5':
             day = 'R'; start = '1:00PM'; end = '5:00PM'
-        if time == 'MW4':
+        elif time == 'MW4':
             day = 'MW'; start = '4:00PM'; end = '5:15PM'
-        if time == 'MWF10:30-12:20':
+        elif time == 'MWF10:30-12:20':
             day = 'MWF'; start = '10:30AM'; end = '12:20PM'
-        if time == 'F1':
+        elif time == 'F1':
             day = 'F'; start = '1:00PM'; end = '1:50PM'
-        if time == 'F1:30':
+        elif time == 'F1:30':
             day = 'F'; start = '1:30PM'; end = '3:30PM'
-        if time == 'F2':
+        elif time == 'F2':
             day = 'F'; start = '2:00PM'; end = '2:50PM'
-        if time == 'M6':
+        elif time == 'F2:30':
+            day = 'F'; start = '2:30PM'; end = '4:00PM'
+        elif time == 'M6':
             day = 'M'; start = '6:00PM'; end = '?'
-        if time == 'T6':
+        elif time == 'T6':
             day = 'T'; start = '6:00PM'; end = '?'
-        if time == 'W6':
+        elif time == 'T6-9':
+            day = 'T'; start = '6:00PM'; end = '9:00PM'
+        elif time == 'W6':
             day = 'W'; start = '6:00PM'; end = '?'
-        if time == 'W8':
+        elif time == 'M8':
+            day = 'M'; start = '8:00AM'; end = '8:50AM'
+        elif time == 'T8':
+            day = 'T'; start = '8:00AM'; end = '8:50AM'
+        elif time == 'W8':
             day = 'W'; start = '8:00AM'; end = '8:50AM'
-        if time == 'T4':
-            day = 'T'; start = '4:00PM'; end = '4:50PM'
+        elif time == 'M2:30':
+            day = 'M'; start = '2:30PM'; end = '4:30PM'
+        elif time == 'T9:30-12:30':
+            day = 'T'; start = '9:30AM'; end = '12:30PM'
+        elif time == 'T6-8:20':
+            day = 'T'; start = '6:00PM'; end = '8:20PM'
+        else:
+            print('not able to identify time label', time)
+            return time, time, time
         
         return day, start, end
     
@@ -276,7 +250,7 @@ class AllConflicts:
     def __init__(self):
         self.allConflicts = []
     
-    def add(self, course1, course2, priority):
+    def add(self, course1, course2, priority = 5):
         conflict = self.getConflict(course1, course2)
         if conflict == None:
             self.allConflicts.append(Conflict(course1, course2, priority))
@@ -307,7 +281,7 @@ class AllConflicts:
         for conflict in self.allConflicts:
             conflict.print()
 
-
+            
 class TimeConflict:
     def __init__(self, time1, time2):
         if time1 > time2:
