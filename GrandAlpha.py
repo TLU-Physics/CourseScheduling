@@ -350,23 +350,42 @@ class GrandAlpha:
         else:
             print('Could not find file', competencyFilename, 'so competency info will not be included')
         
+        crossListingsFilename = 'CrossListings.txt'
+        coursesToAdd = []
+        crosslistingmap = {}
+        if exists(crossListingsFilename):
+            crossListingsFile = open(crossListingsFilename, 'r')
+            for line in crossListingsFile:
+                if len(line.strip()) > 0 and line.strip()[0] != '#':
+                    elements = line.strip().split(',')
+                    coursesToAdd.append(elements[1])
+                    crosslistingmap[elements[0]] = elements[1]
+                    crosslistingmap[elements[1]] = elements[0]
+            crossListingsFile.close()
+        else:
+            print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
+        
         outfile = open(filename, 'w')
-        s = 'category,crs_cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
+        s = 'category,crs_cde,crs_title,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
         outfile.write(s)
         
         allCoursesList = self.allCourseTimes.getAllCourses().copy()
+        
+        # insert cross listings into list of courses to include in report
+        for course in allCoursesList:
+            courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
+            if courseid in crosslistingmap and courseid not in coursesToAdd:
+                otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
+                allCoursesList.append(otherCourse)
+        
         allCoursesList.sort(key = lambda course: CourseTimes.getCourseDept(course) + course)
-        #currentDept = CourseTimes.getCourseDept(allCoursesList[0])
         
         for course in allCoursesList:
-            #if CourseTimes.getCourseDept(course) != currentDept:
-            #    outfile.write('\n')
-            #    currentDept = CourseTimes.getCourseDept(course)
             
             courseDept = CourseTimes.getCourseDept(course)
             courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
             
-            course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + ' ' + CourseTimes.getCourseSectionNum(course)
+            course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + '  ' + CourseTimes.getCourseSectionNum(course)
             if courseid in competencymap:
                 competency = competencymap[courseid]
                 course_code = course_code + '   ' + competency
@@ -375,12 +394,36 @@ class GrandAlpha:
             if courseid in courseNames:
                 course_name = courseNames[courseid]
             
-            timeinfo = self.validTimes[sch[course]]
-            instructor = self.allFacCourses.getFacNameByCourse(course)
-            s = courseDept + ',' + course_code + ',' + course_name + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',\n'
+            section_note = ""
+            if courseid in crosslistingmap:
+                otherCourseid = crosslistingmap[courseid]
+                courseName = CourseTimes.getCourseDeptCode(otherCourseid) + ' ' + CourseTimes.getCourseNum(otherCourseid)
+                section_note = 'Cross Listed as ' + courseName
+            
+            # get schedule info, but this depends on whether the course is cross listed
+            if courseid not in coursesToAdd:
+                timeinfo = self.validTimes[sch[course]]
+                instructor = self.allFacCourses.getFacNameByCourse(course)
+            else:
+                otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
+                timeinfo = self.validTimes[sch[otherCourse]]
+                instructor = self.allFacCourses.getFacNameByCourse(otherCourse)
+            
+            s = courseDept + ',' + course_code + ',' + course_name + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',,' + section_note + '\n'
             outfile.write(s)
             
         outfile.close()
+        
+    def getCrossListedCourse(course, crosslistingmap):
+        courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
+        
+        hyphenpos = course.find('-')
+        sectionNumberPart = ""
+        if hyphenpos > 0:
+            sectionNumberPart = course[hyphenpos:]
+        
+        othercourseid = crosslistingmap[courseid]
+        return othercourseid + sectionNumberPart
     
     def importSch(self, filename):
         schFile = open(filename, 'r')

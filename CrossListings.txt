@@ -1,0 +1,5 @@
+# list course that appears in the other definition files first
+BIOL414,CHEM414
+BIOL437,CHEM437
+PHYS371,MATH371
+STAT375,DAST???
