@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 class FacultyCourses:
     def __init__(self, line):
         line = line.strip()
@@ -57,6 +59,12 @@ class AllFacultyCourses:
             print()
 
 
+class TimeDetail(NamedTuple):
+    day: str
+    start: str
+    end: str
+
+
 class CourseTimes:
     def __init__(self, line):
         line = line.strip()
@@ -113,94 +121,6 @@ class CourseTimes:
         code = name[0:4]
         
         return code
-    
-    def getDayTime(time):
-        # TODO: math has some 4 hour courses that I need to adjust the time for (see Reza email 2/20/2019)
-        if time == 'MWF8':
-            day = 'MWF'; start = '8:00AM'; end = '8:50AM'
-        elif time == 'MWF9':
-            day = 'MWF'; start = '9:00AM'; end = '9:50AM'
-        elif time == 'MWF10:30':
-            day = 'MWF'; start = '10:30AM'; end = '11:20AM'
-        elif time == 'MWF11:30':
-            day = 'MWF'; start = '11:30AM'; end = '12:20PM'
-        elif time == 'MW8':
-            day = 'MW'; start = '8:00AM'; end = '8:50AM'
-        elif time == 'MW9':
-            day = 'MW'; start = '9:00AM'; end = '9:50AM'
-        elif time == 'MW10:30':
-            day = 'MW'; start = '10:30AM'; end = '11:20AM'
-        elif time == 'MW11:30':
-            day = 'MW'; start = '11:30AM'; end = '12:20PM'
-        elif time == 'MWF1':
-            day = 'MWF'; start = '1:00PM'; end = '1:50PM'
-        elif time == 'MWF2:30':
-            day = 'MWF'; start = '2:30PM'; end = '3:20PM'
-        elif time == 'MW1':
-            day = 'MW'; start = '1:00PM'; end = '2:15PM'
-        elif time == 'MW2:30':
-            day = 'MW'; start = '2:30PM'; end = '3:45PM'
-        elif time == 'M1-4':
-            day = 'M'; start = '1:00PM'; end = '4:00PM'
-        elif time == 'M1-5':
-            day = 'M'; start = '1:00PM'; end = '5:00PM'
-        elif time == 'W1-4':
-            day = 'W'; start = '1:00PM'; end = '4:00PM'
-        elif time == 'W1-5':
-            day = 'W'; start = '1:00PM'; end = '5:00PM'
-        elif time == 'TR8':
-            day = 'TR'; start = '8:00AM'; end = '9:15AM'
-        elif time == 'TR10:30':
-            day = 'TR'; start = '10:30AM'; end = '11:45AM'
-        elif time == 'TR1':
-            day = 'TR'; start = '1:00PM'; end = '2:15PM'
-        elif time == 'TR2:30':
-            day = 'TR'; start = '2:30PM'; end = '3:45PM'
-        elif time == 'T1-4':
-            day = 'T'; start = '1:00PM'; end = '4:00PM'
-        elif time == 'T1-5':
-            day = 'T'; start = '1:00PM'; end = '5:00PM'
-        elif time == 'R1-4':
-            day = 'R'; start = '1:00PM'; end = '4:00PM'
-        elif time == 'R1-5':
-            day = 'R'; start = '1:00PM'; end = '5:00PM'
-        elif time == 'MW4':
-            day = 'MW'; start = '4:00PM'; end = '5:15PM'
-        elif time == 'MWF10:30-12:20':
-            day = 'MWF'; start = '10:30AM'; end = '12:20PM'
-        elif time == 'F1':
-            day = 'F'; start = '1:00PM'; end = '1:50PM'
-        elif time == 'F1:30':
-            day = 'F'; start = '1:30PM'; end = '3:30PM'
-        elif time == 'F2':
-            day = 'F'; start = '2:00PM'; end = '2:50PM'
-        elif time == 'F2:30':
-            day = 'F'; start = '2:30PM'; end = '4:00PM'
-        elif time == 'M6':
-            day = 'M'; start = '6:00PM'; end = '?'
-        elif time == 'T6':
-            day = 'T'; start = '6:00PM'; end = '?'
-        elif time == 'T6-9':
-            day = 'T'; start = '6:00PM'; end = '9:00PM'
-        elif time == 'W6':
-            day = 'W'; start = '6:00PM'; end = '?'
-        elif time == 'M8':
-            day = 'M'; start = '8:00AM'; end = '8:50AM'
-        elif time == 'T8':
-            day = 'T'; start = '8:00AM'; end = '8:50AM'
-        elif time == 'W8':
-            day = 'W'; start = '8:00AM'; end = '8:50AM'
-        elif time == 'M2:30':
-            day = 'M'; start = '2:30PM'; end = '4:30PM'
-        elif time == 'T9:30-12:30':
-            day = 'T'; start = '9:30AM'; end = '12:30PM'
-        elif time == 'T6-8:20':
-            day = 'T'; start = '6:00PM'; end = '8:20PM'
-        else:
-            print('not able to identify time label', time)
-            return time, time, time
-        
-        return day, start, end
     
     def print(self):
         print(self.name, 'has available times ', end = '')

@@ -5,13 +5,15 @@ from DataStructures import *
 
 class GrandAlpha:
     def __init__(self, facCourseFilename, courseTimesFilename, conflictsFilename, timeConflictsFilename):
-        # load the valid time labels (for error checking)
+        # load the valid time labels (for error checking) and detail (for report)
         validTimesFilename = 'ValidTimes.txt'
         validTimesFile = open(validTimesFilename, 'r')
-        self.validTimes = set()
+        self.validTimes = {}
         for line in validTimesFile:
             if len(line.strip()) > 0 and line.strip()[0] != '#':
-                self.validTimes.add(line.strip())
+                elements = line.strip().split(',')
+                timecode = elements[0]
+                self.validTimes[timecode] = TimeDetail(elements[1], elements[2], elements[3])
         
         # load the course names
         courseNamesFilename = 'CourseNames.txt'
@@ -328,7 +330,7 @@ class GrandAlpha:
     
     def exportSchDetail(self, filename, sch):
         outfile = open(filename, 'w')
-        s = 'category,crs_cde,cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
+        s = 'category,crs_cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
         outfile.write(s)
         
         allCoursesList = self.allCourseTimes.getAllCourses().copy()
@@ -345,9 +347,9 @@ class GrandAlpha:
             
             course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + ' ' + CourseTimes.getCourseSectionNum(course)
             course_name = self.courseNames[courseid]
-            day, start, end = CourseTimes.getDayTime(sch[course])
+            timeinfo = self.validTimes[sch[course]]
             instructor = self.allFacCourses.getFacNameByCourse(course)
-            s = courseDept + ',' + course_code + ',,' + course_name + ',' + day + ',' + start + ',' + end + ',,,' + instructor + ',\n'
+            s = courseDept + ',' + course_code + ',' + course_name + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',\n'
             outfile.write(s)
             
         outfile.close()
