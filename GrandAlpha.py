@@ -1,5 +1,6 @@
 from math import sqrt,exp
 from random import random,choice
+from os.path import exists
 
 from DataStructures import *
 
@@ -15,17 +16,7 @@ class GrandAlpha:
                 timecode = elements[0]
                 self.validTimes[timecode] = TimeDetail(elements[1], elements[2], elements[3])
         
-        # load the course names
-        courseNamesFilename = 'CourseNames.txt'
-        courseNamesFile = open(courseNamesFilename, 'r')
-        self.courseNames = {}
-        for line in courseNamesFile:
-            linest = line.strip()
-            if len(linest) > 0 and linest[0] != '#':
-                # careful about commas inside the course name
-                commapos = linest.find(',')
-                courseid = linest[:commapos]
-                self.courseNames[courseid] = linest[commapos + 1:]
+        validTimesFile.close()
         
         # load the information about what possible times each course can be taught at
         courseTimesFile = open(courseTimesFilename, 'r')
@@ -329,6 +320,36 @@ class GrandAlpha:
         outfile.close()
     
     def exportSchDetail(self, filename, sch):
+        
+        # load the course names
+        courseNamesFilename = 'CourseNames.txt'
+        courseNames = {}
+        if exists(courseNamesFilename):
+            courseNamesFile = open(courseNamesFilename, 'r')
+            for line in courseNamesFile:
+                linest = line.strip()
+                if len(linest) > 0 and linest[0] != '#':
+                    # careful about commas inside the course name
+                    commapos = linest.find(',')
+                    courseid = linest[:commapos]
+                    courseNames[courseid] = linest[commapos + 1:]
+            courseNamesFile.close()
+        else:
+            print('Could not find file', courseNamesFilename, 'so course names will not be included')
+        
+        competencyFilename = 'CompetencyList.txt'
+        competencymap = {}
+        if exists(competencyFilename):
+            competencyFile = open(competencyFilename, 'r')
+            for line in competencyFile:
+                if len(line.strip()) > 0 and line.strip()[0] != '#':
+                    elements = line.strip().split(',')
+                    cid = elements[0]
+                    competencymap[cid] = elements[1]
+            competencyFile.close()
+        else:
+            print('Could not find file', competencyFilename, 'so competency info will not be included')
+        
         outfile = open(filename, 'w')
         s = 'category,crs_cde,crs_title,days,begin_time,end_time,bldg,room,instructor,cap\n'
         outfile.write(s)
@@ -346,7 +367,14 @@ class GrandAlpha:
             courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
             
             course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + ' ' + CourseTimes.getCourseSectionNum(course)
-            course_name = self.courseNames[courseid]
+            if courseid in competencymap:
+                competency = competencymap[courseid]
+                course_code = course_code + '   ' + competency
+            
+            course_name = ""
+            if courseid in courseNames:
+                course_name = courseNames[courseid]
+            
             timeinfo = self.validTimes[sch[course]]
             instructor = self.allFacCourses.getFacNameByCourse(course)
             s = courseDept + ',' + course_code + ',' + course_name + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',\n'

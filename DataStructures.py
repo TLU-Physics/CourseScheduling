@@ -100,7 +100,7 @@ class CourseTimes:
     def getCourseDept(name):
         code = CourseTimes.getCourseDeptCode(name)
         if code == 'CSCI' or code == 'ISYS':
-            dept = 'Computer Science'
+            dept = 'CSIS'
         elif code == 'CHEM' or code == 'NSCI':
             dept = 'Chemistry'
         elif code == 'PHYS':
