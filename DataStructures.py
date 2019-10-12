@@ -53,6 +53,12 @@ class AllFacultyCourses:
                 courses.append(el)
         return courses
     
+    def getFacultyCoursesItemByName(self, facultyName):
+        for facCourses in self.allFacCourses:
+            if facCourses.name == facultyName:
+                return facCourses
+        return None
+    
     def print(self):
         for facCourses in self.allFacCourses:
             facCourses.print()

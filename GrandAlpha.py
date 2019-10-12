@@ -5,7 +5,7 @@ from os.path import exists
 from DataStructures import *
 
 class GrandAlpha:
-    def __init__(self, facCourseFilename, courseTimesFilename, conflictsFilename, timeConflictsFilename):
+    def __init__(self, schinitFilename, conflictsFilename, timeConflictsFilename):
         # load the valid time labels (for error checking) and detail (for report)
         validTimesFilename = 'ValidTimes.txt'
         validTimesFile = open(validTimesFilename, 'r')
@@ -19,33 +19,39 @@ class GrandAlpha:
         validTimesFile.close()
         
         # load the information about what possible times each course can be taught at
-        courseTimesFile = open(courseTimesFilename, 'r')
+        # and load the information about what courses faculty are teaching
+        schinitFile = open(schinitFilename, 'r')
         self.allCourseTimes = AllCourseTimes()
-        for line in courseTimesFile:
-            if len(line.strip()) > 0 and line.strip()[0] != '#':
-                courseTimes = CourseTimes(line)
+        self.allFacCourses = AllFacultyCourses() # this will be the list of faculty schedulesfor line in schinitFile:
+        firstline = True
+        for line in schinitFile:
+            if firstline:
+                firstline = False
+                continue
+            
+            if len(line.strip()) > 0:
+                # TODO: commas in course names are problematic
+                elements = line.strip().split(',')
+                if len(elements) < 13:
+                    raise Exception('There does not appear to be enough data in the file to be used as a detailed input file. 13 columns needed. Not enough data found on the following line:\n' + line)
+                courseTimesLine = elements[1] + ',' + elements[4].replace(';', ',')
+                courseTimes = CourseTimes(courseTimesLine)
                 for t in courseTimes.times:
                     if t not in self.validTimes:
                         raise ValueError(t + ' (for ' + courseTimes.name + ') is not in the list of valid times')
                 self.allCourseTimes.append(courseTimes)
+                facultyName = elements[10].strip()
+                facCourses = self.allFacCourses.getFacultyCoursesItemByName(facultyName)
+                if facCourses == None:
+                    facultyLine = facultyName + ',' + elements[1].strip()
+                    facCourses = FacultyCourses(facultyLine)
+                    self.allFacCourses.append(facCourses)
+                else:
+                    facCourses.courses.append(elements[1].strip())
 
-        courseTimesFile.close()
+        schinitFile.close()
         
         allCoursesList = self.allCourseTimes.getAllCourses()
-        
-        # load the information about what courses faculty are teaching
-        facCourseFile = open(facCourseFilename, 'r')
-        self.allFacCourses = AllFacultyCourses() # this will be the list of faculty schedules
-        for line in facCourseFile:
-            if len(line.strip()) > 0 and line.strip()[0] != '#':
-                facCourses = FacultyCourses(line)
-                for course in facCourses.courses:
-                    if course not in allCoursesList:
-                        print('The course', course, 'is not in the master list of courses')
-                        raise Exception
-                self.allFacCourses.append(facCourses)
-
-        facCourseFile.close()
         
         # load the information about the course conflicts that exist that the new
         # schedule must adapt to
@@ -319,7 +325,7 @@ class GrandAlpha:
         
         outfile.close()
     
-    def exportSchDetail(self, filename, sch):
+    def exportSchDetail(self, filename, sch, addCrossListings = True):
         
         # load the course names
         courseNamesFilename = 'CourseNames.txt'
@@ -353,20 +359,21 @@ class GrandAlpha:
         crossListingsFilename = 'CrossListings.txt'
         coursesToAdd = []
         crosslistingmap = {}
-        if exists(crossListingsFilename):
-            crossListingsFile = open(crossListingsFilename, 'r')
-            for line in crossListingsFile:
-                if len(line.strip()) > 0 and line.strip()[0] != '#':
-                    elements = line.strip().split(',')
-                    coursesToAdd.append(elements[1])
-                    crosslistingmap[elements[0]] = elements[1]
-                    crosslistingmap[elements[1]] = elements[0]
-            crossListingsFile.close()
-        else:
-            print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
+        if addCrossListings:
+            if exists(crossListingsFilename):
+                crossListingsFile = open(crossListingsFilename, 'r')
+                for line in crossListingsFile:
+                    if len(line.strip()) > 0 and line.strip()[0] != '#':
+                        elements = line.strip().split(',')
+                        coursesToAdd.append(elements[1])
+                        crosslistingmap[elements[0]] = elements[1]
+                        crosslistingmap[elements[1]] = elements[0]
+                crossListingsFile.close()
+            else:
+                print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
         
         outfile = open(filename, 'w')
-        s = 'category,crs_cde,crs_title,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
+        s = 'category,coursecode,crs_cde,crs_title,timecode,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
         outfile.write(s)
         
         allCoursesList = self.allCourseTimes.getAllCourses().copy()
@@ -402,14 +409,16 @@ class GrandAlpha:
             
             # get schedule info, but this depends on whether the course is cross listed
             if courseid not in coursesToAdd:
-                timeinfo = self.validTimes[sch[course]]
+                timecode = sch[course]
                 instructor = self.allFacCourses.getFacNameByCourse(course)
             else:
                 otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
-                timeinfo = self.validTimes[sch[otherCourse]]
+                timecode = sch[otherCourse]
                 instructor = self.allFacCourses.getFacNameByCourse(otherCourse)
             
-            s = courseDept + ',' + course_code + ',' + course_name + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',,' + section_note + '\n'
+            timeinfo = self.validTimes[timecode]
+            
+            s = courseDept + ',' + course + ',' + course_code + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',,,' + instructor + ',,' + section_note + '\n'
             outfile.write(s)
             
         outfile.close()
@@ -425,14 +434,24 @@ class GrandAlpha:
         othercourseid = crosslistingmap[courseid]
         return othercourseid + sectionNumberPart
     
-    def importSch(self, filename):
+    def importSch(self, filename, detail = False):
         schFile = open(filename, 'r')
         sch = {}
         for line in schFile:
             if len(line.strip()) > 0:
                 linesplit = line.strip().split(',')
-                if len(linesplit[1]) > 0:
-                    sch[linesplit[1].strip()] = linesplit[2].strip()
+                if detail:
+                    if len(linesplit) < 5:
+                        raise Exception('There does not appear to be enough data in the file to be used as a detailed schedule. Not enough data found on the following line:\n' + line)
+                    timecode = linesplit[4].strip()
+                else:
+                    if len(linesplit) < 3:
+                        raise Exception('There does not appear to be enough data in the file to be used as a simple schedule. Not enough data found on the following line:\n' + line)
+                    timecode = linesplit[2].strip()
+                
+                if timecode.find(';') > 0:
+                    raise ValueError(timecode + ' has multiple times listed. Perhaps this file is meant for initialization of the Grand Alpha, not as a valid schedule')
+                sch[linesplit[1].strip()] = timecode
 
         schFile.close()
         
@@ -450,3 +469,6 @@ class GrandAlpha:
                         print('WARNING:', facCourses.name, 'has a conflict between', facCourses.courses[i], 'and', facCourses.courses[j], 'in the imported schedule.')
         
         return sch
+
+    def importSchDetail(self, filename):
+        return self.importSch(filename, True)
