@@ -181,7 +181,17 @@ class AllConflicts:
         if conflict == None:
             self.allConflicts.append(Conflict(course1, course2, priority))
         else:
-            conflict.priority += int(priority)
+            if conflict.priority < int(priority):
+                conflict.priority = int(priority)
+            else:
+                print('Trying to add the conflict between', course1, 'and', course2, 'again. Ignoring.')
+            #conflict.priority += int(priority)
+
+    def addCluster(self, courseList, priority = 5):
+        numCourses = len(courseList)
+        for i in range(numCourses):
+            for j in range(i + 1, numCourses):
+                self.add(courseList[i], courseList[j], priority)
 
     def getConflict(self, course1, course2):
         if course1 > course2:

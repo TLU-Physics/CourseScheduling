@@ -59,19 +59,24 @@ class GrandAlpha:
         self.allConflicts = AllConflicts()
         for line in conflictsFile:
             if len(line.strip()) > 0 and line.strip()[0] != '#':
-                els = line.strip().split(',')
-                if els[0] not in allCoursesList:
-                    if els[0] + '-1' not in allCoursesList:
-                        print('The course', els[0], 'is not in the master list of courses')
-                        raise Exception
-                if els[1] not in allCoursesList:
-                    if els[1] + '-1' not in allCoursesList:
-                        print('The course', els[1], 'is not in the master list of courses')
-                        raise Exception
-                if len(els) == 2:
-                    self.allConflicts.add(els[0], els[1])
+                semipos = line.find(';')
+                priority = ""
+                if semipos > 0:
+                    priority = line[semipos + 1:]
+                    line = line[:semipos]
+                courses = line.strip().split(',')
+                
+                # check to make sure the courses in the list exist
+                for course in courses:
+                    if course not in allCoursesList:
+                        if course + '-1' not in allCoursesList:
+                            print('The course', course, 'is not in the master list of courses')
+                            raise Exception
+                
+                if priority == "":
+                    self.allConflicts.addCluster(courses)
                 else:
-                    self.allConflicts.add(els[0], els[1], els[2])
+                    self.allConflicts.addCluster(courses, priority)
 
         conflictsFile.close()
 
