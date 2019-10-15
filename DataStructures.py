@@ -76,6 +76,8 @@ class CourseTimes:
         line = line.strip()
         elements = line.split(',')
         self.name = elements.pop(0)
+        self.building = elements.pop(0)
+        self.room = elements.pop(0)
         #self.maxsize = elements.pop(0)
         self.times = elements.copy()
     
@@ -151,6 +153,16 @@ class AllCourseTimes:
             for courseTimes in self.allCourseTimes:
                 if courseTimes.name == name:
                     return courseTimes
+            return None
+        return None
+        
+    def getCourseLocation(self, name):
+        if type(name) == int:
+            return self.allCourseTimes[name].building, self.allCourseTimes[name].room
+        elif type(name) == str:
+            for courseTimes in self.allCourseTimes:
+                if courseTimes.name == name:
+                    return courseTimes.building, courseTimes.room
             return None
         return None
     
