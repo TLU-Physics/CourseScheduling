@@ -132,6 +132,7 @@ PHYS240L,CHEM144L;1
 ##PHYS241,CHEM144;1
 ##PHYS241L,CHEM144L;1
 
+# this should have included MATH334
 PHYS334,PHYS371,MATH333
 # sophomore also takes modern lab
 PHYS313,MATH333
