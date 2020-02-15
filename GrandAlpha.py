@@ -34,7 +34,7 @@ class GrandAlpha:
                 elements = line.strip().split(',')
                 if len(elements) < 13:
                     raise Exception('There does not appear to be enough data in the file to be used as a detailed input file. 13 columns needed. Not enough data found on the following line:\n' + line)
-                courseTimesLine = elements[1] + ',' + elements[8] + ',' + elements[9] + ',' + elements[4].replace(';', ',')
+                courseTimesLine = elements[1] + ',' + elements[8] + ',' + elements[9] + ',' + elements[11] + ',' + elements[4].replace(';', ',')
                 courseTimes = CourseTimes(courseTimesLine)
                 for t in courseTimes.times:
                     if t not in self.validTimes:
@@ -417,15 +417,17 @@ class GrandAlpha:
                 timecode = sch[course]
                 instructor = self.allFacCourses.getFacNameByCourse(course)
                 building, room = self.allCourseTimes.getCourseLocation(course)
+                capacity = self.allCourseTimes.getCourseCapacity(course)
             else:
                 otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
                 timecode = sch[otherCourse]
                 instructor = self.allFacCourses.getFacNameByCourse(otherCourse)
                 building, room = self.allCourseTimes.getCourseLocation(otherCourse)
+                capacity = self.allCourseTimes.getCourseCapacity(otherCourse)
             
             timeinfo = self.validTimes[timecode]
             
-            s = courseDept + ',' + course + ',' + course_code + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',' + building + ',' + room + ',' + instructor + ',,' + section_note + '\n'
+            s = courseDept + ',' + course + ',' + course_code + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',' + building + ',' + room + ',' + instructor + ',' + capacity + ',' + section_note + '\n'
             outfile.write(s)
             
         outfile.close()

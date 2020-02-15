@@ -78,6 +78,7 @@ class CourseTimes:
         self.name = elements.pop(0)
         self.building = elements.pop(0)
         self.room = elements.pop(0)
+        self.capacity = elements.pop(0)
         #self.maxsize = elements.pop(0)
         self.times = elements.copy()
     
@@ -166,6 +167,16 @@ class AllCourseTimes:
             return None
         return None
     
+    def getCourseCapacity(self, name):
+        if type(name) == int:
+            return self.allCourseTimes[name].capacity
+        elif type(name) == str:
+            for courseTimes in self.allCourseTimes:
+                if courseTimes.name == name:
+                    return courseTimes.capacity
+            return None
+        return None
+    
     def print(self):
         for courseTimes in self.allCourseTimes:
             courseTimes.print()
@@ -195,8 +206,8 @@ class AllConflicts:
         else:
             if conflict.priority < int(priority):
                 conflict.priority = int(priority)
-            else:
-                print('Trying to add the conflict between', course1, 'and', course2, 'again. Ignoring.')
+            #else:
+                #print('Trying to add the conflict between', course1, 'and', course2, 'again. Ignoring.')
             #conflict.priority += int(priority)
 
     def addCluster(self, courseList, priority = 5):

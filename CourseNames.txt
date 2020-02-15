@@ -1,4 +1,5 @@
 BIOL111,"Biodiversity in Central Texas"
+ENVS111,"Biodiversity in Central Texas"
 BIOL140,"Basic Biology"
 BIOL140L,"Basic Biology Lab"
 BIOL131,"Issues in Biology"
