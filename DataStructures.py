@@ -1,12 +1,12 @@
 from typing import NamedTuple
 
 class FacultyCourses:
-    def __init__(self, line):
+    def __init__(self, line, dept):
         line = line.strip()
         elements = line.split(',')
         self.name = elements.pop(0)
         self.courses = elements.copy()
-        self.dept = CourseTimes.getCourseDept(self.courses[0])
+        self.dept = dept
         
     def contains(self, course):
         return course in self.courses
@@ -72,15 +72,15 @@ class TimeDetail(NamedTuple):
 
 
 class CourseTimes:
-    def __init__(self, line):
-        line = line.strip()
-        elements = line.split(',')
-        self.name = elements.pop(0)
-        self.building = elements.pop(0)
-        self.room = elements.pop(0)
-        self.capacity = elements.pop(0)
-        #self.maxsize = elements.pop(0)
-        self.times = elements.copy()
+    def __init__(self, category, name, hours, cde, timecode, building, room, cap):
+        self.category = category.strip()
+        self.name = name.strip()
+        self.hours = hours.strip()
+        self.cde = cde.strip()
+        self.building = building.strip()
+        self.room = room.strip()
+        self.capacity = cap.strip()
+        self.times = timecode.strip().split(';')
     
     def contains(self, time):
         return time in self.times
@@ -105,26 +105,6 @@ class CourseTimes:
             return '0' + name[hyphenpos + 1]
         else:
             return '01'
-    
-    def getCourseDept(name):
-        code = CourseTimes.getCourseDeptCode(name)
-        if code == 'CSCI' or code == 'ISYS':
-            dept = 'CSIS'
-        elif code == 'CHEM' or code == 'NSCI':
-            dept = 'Chemistry'
-        elif code == 'PHYS':
-            dept = 'Physics'
-        elif code == 'MATH' or code == 'STAT' or code == 'DAST' or code == 'DAIC':
-            dept = 'Math'
-        elif code == 'BIOL' or code == 'ENVS':
-            dept = 'Biology'
-        elif code == 'FREX' or code == 'PHIL':
-            dept = 'Biology'
-        else:
-            dept = 'Unknown'
-            print('Unknown department with code', code)
-        
-        return dept
     
     def getCourseDeptCode(name):
         code = name[0:4]
@@ -157,23 +137,42 @@ class AllCourseTimes:
             return None
         return None
         
-    def getCourseLocation(self, name):
+    def getCourseDept(self, name):
         if type(name) == int:
-            return self.allCourseTimes[name].building, self.allCourseTimes[name].room
+            return self.allCourseTimes[name].category
         elif type(name) == str:
             for courseTimes in self.allCourseTimes:
                 if courseTimes.name == name:
-                    return courseTimes.building, courseTimes.room
-            return None
+                    return courseTimes.category
+                    
+            # handle cross listings, which are not in the original list
+            code = CourseTimes.getCourseDeptCode(name)
+            if code == 'CSCI' or code == 'ISYS':
+                dept = 'CSIS'
+            elif code == 'CHEM' or code == 'NSCI':
+                dept = 'Chemistry'
+            elif code == 'PHYS':
+                dept = 'Physics'
+            elif code == 'MATH' or code == 'STAT' or code == 'DAST' or code == 'DAIC':
+                dept = 'Math'
+            elif code == 'BIOL' or code == 'ENVS':
+                dept = 'Biology'
+            elif code == 'FREX' or code == 'PHIL':
+                dept = 'Biology'
+            else:
+                dept = 'Unknown'
+                print('Unknown department with code', code)
+            
+            return dept
         return None
-    
-    def getCourseCapacity(self, name):
+        
+    def getCourseInfo(self, name):
         if type(name) == int:
-            return self.allCourseTimes[name].capacity
+            return self.allCourseTimes[name].category, self.allCourseTimes[name].hours, self.allCourseTimes[name].cde, self.allCourseTimes[name].building, self.allCourseTimes[name].room, self.allCourseTimes[name].capacity
         elif type(name) == str:
             for courseTimes in self.allCourseTimes:
                 if courseTimes.name == name:
-                    return courseTimes.capacity
+                    return courseTimes.category, courseTimes.hours, courseTimes.cde, courseTimes.building, courseTimes.room, courseTimes.capacity
             return None
         return None
     

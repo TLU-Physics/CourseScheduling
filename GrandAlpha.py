@@ -18,6 +18,9 @@ class GrandAlpha:
         
         validTimesFile.close()
         
+        crossListingsFilename = 'CrossListings.txt'
+        coursesToIgnore, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
+        
         # load the information about what possible times each course can be taught at
         # and load the information about what courses faculty are teaching
         schinitFile = open(schinitFilename, 'r')
@@ -32,22 +35,25 @@ class GrandAlpha:
             if len(line.strip()) > 0:
                 # TODO: commas in course names are problematic
                 elements = line.strip().split(',')
-                if len(elements) < 13:
-                    raise Exception('There does not appear to be enough data in the file to be used as a detailed input file. 13 columns needed. Not enough data found on the following line:\n' + line)
-                courseTimesLine = elements[1] + ',' + elements[8] + ',' + elements[9] + ',' + elements[11] + ',' + elements[4].replace(';', ',')
-                courseTimes = CourseTimes(courseTimesLine)
-                for t in courseTimes.times:
-                    if t not in self.validTimes:
-                        raise ValueError(t + ' (for ' + courseTimes.name + ') is not in the list of valid times')
-                self.allCourseTimes.append(courseTimes)
-                facultyName = elements[10].strip()
-                facCourses = self.allFacCourses.getFacultyCoursesItemByName(facultyName)
-                if facCourses == None:
-                    facultyLine = facultyName + ',' + elements[1].strip()
-                    facCourses = FacultyCourses(facultyLine)
-                    self.allFacCourses.append(facCourses)
-                else:
-                    facCourses.courses.append(elements[1].strip())
+                if len(elements) < 15:
+                    raise Exception('There does not appear to be enough data in the file to be used as a detailed input file. 15 columns needed. Not enough data found on the following line:\n' + line)
+                
+                course = elements[1].strip()
+                courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
+                if courseid not in coursesToIgnore:
+                    courseTimes = CourseTimes(category = elements[0], name = elements[1], hours = elements[3], cde = elements[4], timecode = elements[6], building = elements[10], room = elements[11], cap = elements[13])
+                    for t in courseTimes.times:
+                        if t not in self.validTimes:
+                            raise ValueError(t + ' (for ' + courseTimes.name + ') is not in the list of valid times')
+                    self.allCourseTimes.append(courseTimes)
+                    facultyName = elements[12].strip()
+                    facCourses = self.allFacCourses.getFacultyCoursesItemByName(facultyName)
+                    if facCourses == None:
+                        facultyLine = facultyName + ',' + elements[1].strip()
+                        facCourses = FacultyCourses(facultyLine, dept = elements[0])
+                        self.allFacCourses.append(facCourses)
+                    else:
+                        facCourses.courses.append(elements[1].strip())
 
         schinitFile.close()
         
@@ -272,7 +278,7 @@ class GrandAlpha:
             
             # show progress
             if t % 5000 == 0:
-                print('Steps taken:', t, 'penalties:', penalties)
+                print('Steps taken:', t, '   penalties:', penalties)
 
             # Cooling
             T = Tinitial * exp(-t/tau)
@@ -365,20 +371,10 @@ class GrandAlpha:
         coursesToAdd = []
         crosslistingmap = {}
         if addCrossListings:
-            if exists(crossListingsFilename):
-                crossListingsFile = open(crossListingsFilename, 'r')
-                for line in crossListingsFile:
-                    if len(line.strip()) > 0 and line.strip()[0] != '#':
-                        elements = line.strip().split(',')
-                        coursesToAdd.append(elements[1])
-                        crosslistingmap[elements[0]] = elements[1]
-                        crosslistingmap[elements[1]] = elements[0]
-                crossListingsFile.close()
-            else:
-                print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
+            coursesToAdd, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
         
         outfile = open(filename, 'w')
-        s = 'category,coursecode,crs_cde,crs_title,timecode,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
+        s = 'category,coursecode,crs_cde,hrs,cde,crs_title,timecode,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
         outfile.write(s)
         
         allCoursesList = self.allCourseTimes.getAllCourses().copy()
@@ -390,11 +386,10 @@ class GrandAlpha:
                 otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
                 allCoursesList.append(otherCourse)
         
-        allCoursesList.sort(key = lambda course: CourseTimes.getCourseDept(course) + course)
+        allCoursesList.sort(key = lambda course: self.allCourseTimes.getCourseDept(course) + course)
         
         for course in allCoursesList:
             
-            courseDept = CourseTimes.getCourseDept(course)
             courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
             
             course_code = CourseTimes.getCourseDeptCode(course) + ' ' + CourseTimes.getCourseNum(course) + '  ' + CourseTimes.getCourseSectionNum(course)
@@ -413,24 +408,41 @@ class GrandAlpha:
                 section_note = 'Cross Listed as ' + courseName
             
             # get schedule info, but this depends on whether the course is cross listed
-            if courseid not in coursesToAdd:
+            if courseid not in coursesToAdd: # it is the primary of the cross listing or is not cross listed
                 timecode = sch[course]
                 instructor = self.allFacCourses.getFacNameByCourse(course)
-                building, room = self.allCourseTimes.getCourseLocation(course)
-                capacity = self.allCourseTimes.getCourseCapacity(course)
-            else:
+                category, hours, cde, building, room, capacity = self.allCourseTimes.getCourseInfo(course)
+            else: # it is the secondary of the cross listing
                 otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
                 timecode = sch[otherCourse]
                 instructor = self.allFacCourses.getFacNameByCourse(otherCourse)
-                building, room = self.allCourseTimes.getCourseLocation(otherCourse)
-                capacity = self.allCourseTimes.getCourseCapacity(otherCourse)
+                category, hours, cde, building, room, capacity = self.allCourseTimes.getCourseInfo(otherCourse)
+                category = self.allCourseTimes.getCourseDept(course)
+                hours = "0"
             
             timeinfo = self.validTimes[timecode]
             
-            s = courseDept + ',' + course + ',' + course_code + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',' + building + ',' + room + ',' + instructor + ',' + capacity + ',' + section_note + '\n'
+            s = category + ',' + course + ',' + course_code + ',' + hours + ',' + cde + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',' + building + ',' + room + ',' + instructor + ',' + capacity + ',' + section_note + '\n'
             outfile.write(s)
             
         outfile.close()
+        
+    def loadCrossListings(crossListingsFilename):
+        crosslistinglist = []
+        crosslistingmap = {}
+        if exists(crossListingsFilename):
+            crossListingsFile = open(crossListingsFilename, 'r')
+            for line in crossListingsFile:
+                if len(line.strip()) > 0 and line.strip()[0] != '#':
+                    elements = line.strip().split(',')
+                    crosslistinglist.append(elements[1])
+                    crosslistingmap[elements[0]] = elements[1]
+                    crosslistingmap[elements[1]] = elements[0]
+            crossListingsFile.close()
+        else:
+            print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
+        
+        return crosslistinglist, crosslistingmap
         
     def getCrossListedCourse(course, crosslistingmap):
         courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
@@ -444,19 +456,22 @@ class GrandAlpha:
         return othercourseid + sectionNumberPart
     
     def importSch(self, filename, detail = False):
+        crossListingsFilename = 'CrossListings.txt'
+        coursesToIgnore, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
+        
         schFile = open(filename, 'r')
         sch = {}
         for line in schFile:
             if len(line.strip()) > 0:
                 linesplit = line.strip().split(',')
                 
-                # TODO: room numbers are only set in initialization file - they could be overwritten by what is being imported here
+                # TODO: room numbers are only set in initialization file - what is imported here will be ignored
                 # alternative is to attach a room to the schedule, so that different schedules could have different room numbers and this information would be available for comparison. This is probably better
                 
                 if detail:
-                    if len(linesplit) < 5:
+                    if len(linesplit) < 15:
                         raise Exception('There does not appear to be enough data in the file to be used as a detailed schedule. Not enough data found on the following line:\n' + line)
-                    timecode = linesplit[4].strip()
+                    timecode = linesplit[6].strip()
                 else:
                     if len(linesplit) < 3:
                         raise Exception('There does not appear to be enough data in the file to be used as a simple schedule. Not enough data found on the following line:\n' + line)
@@ -464,7 +479,11 @@ class GrandAlpha:
                 
                 if timecode.find(';') > 0:
                     raise ValueError(timecode + ' has multiple times listed. Perhaps this file is meant for initialization of the Grand Alpha, not as a valid schedule')
-                sch[linesplit[1].strip()] = timecode
+                
+                course = linesplit[1].strip()
+                courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
+                if courseid not in coursesToIgnore:
+                    sch[course] = timecode
 
         schFile.close()
         
