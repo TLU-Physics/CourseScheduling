@@ -350,22 +350,7 @@ class GrandAlpha:
         
         # TODO: need more detail - like where are the penalties coming from?
     
-    def exportSch(self, filename, sch):
-        outfile = open(filename, 'w')
-        facCoursesList = self.allFacCourses.allFacCourses.copy()
-        facCoursesList.sort(key = lambda facCourses: facCourses.dept + facCourses.name)
-        currentDept = facCoursesList[0].dept
-        for facCourses in facCoursesList:
-            if facCourses.dept != currentDept:
-                outfile.write('\n')
-                currentDept = facCourses.dept
-            for course in facCourses.courses:
-                s = facCourses.name + ',' + course + ',' + sch[course] + '\n'
-                outfile.write(s)
-        
-        outfile.close()
-    
-    def exportSchDetail(self, filename, sch, addCrossListings = True):
+    def exportSch(self, filename, sch, addCrossListings = True):
         
         # load the course names
         courseNamesFilename = 'CourseNames.txt'
@@ -402,6 +387,8 @@ class GrandAlpha:
         if addCrossListings:
             coursesToAdd, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
         
+        if exists(filename):
+            raise Exception('The file ' + filename + ' already exists. Aborting.')
         outfile = open(filename, 'w')
         s = 'category,crs_cde,hrs,cde,crs_title,timecode,days,begin_time,end_time,bldg,room,instructor_name,cap,section_note\n'
         outfile.write(s)
@@ -484,7 +471,7 @@ class GrandAlpha:
         othercourseid = crosslistingmap[courseid]
         return othercourseid + sectionNumberPart
     
-    def importSch(self, filename, detail = True):
+    def importSch(self, filename):
         crossListingsFilename = 'CrossListings.txt'
         coursesToIgnore, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
         
@@ -500,14 +487,9 @@ class GrandAlpha:
                 # TODO: room numbers are only set in initialization file - what is imported here will be ignored
                 # alternative is to attach a room to the schedule, so that different schedules could have different room numbers and this information would be available for comparison. This is probably better
                 
-                if detail:
-                    if len(linesplit) < 14:
-                        raise Exception('There does not appear to be enough data in the file to be used as a detailed schedule. Not enough data found on the following line:\n' + line)
-                    timecode = linesplit[5].strip()
-                else:
-                    if len(linesplit) < 3:
-                        raise Exception('There does not appear to be enough data in the file to be used as a simple schedule. Not enough data found on the following line:\n' + line)
-                    timecode = linesplit[2].strip()
+                if len(linesplit) < 14:
+                    raise Exception('There does not appear to be enough data in the file to be used as a detailed schedule. Not enough data found on the following line:\n' + line)
+                timecode = linesplit[5].strip()
                 
                 if timecode.find(';') > 0:
                     raise ValueError(timecode + ' has multiple times listed. Perhaps this file is meant for initialization of the Grand Alpha, not as a valid schedule')
@@ -541,6 +523,3 @@ class GrandAlpha:
                         print('WARNING:', facCourses.name, 'has a conflict between', facCourses.courses[i], 'and', facCourses.courses[j], 'in the imported schedule.')
         
         return sch
-
-    def importSchDetail(self, filename):
-        return self.importSch(filename, True)

@@ -148,7 +148,7 @@ class AllCourseTimes:
             # handle cross listings, which are not in the original list
             code = CourseTimes.getCourseDeptCode(name)
             if code == 'CSCI' or code == 'ISYS':
-                dept = 'CSIS'
+                dept = 'Csis'
             elif code == 'CHEM' or code == 'NSCI':
                 dept = 'Chemistry'
             elif code == 'PHYS':
