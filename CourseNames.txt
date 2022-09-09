@@ -132,6 +132,7 @@ DAIC532,"Database Design"
 DAIC533,"Information Security"
 DAST531,"Advanced Statistical Methods I"
 DAST532,"Advanced Statistical Methods II"
+DAST534,"Mathematical Statistics"
 DAST535,"Computational Methods and Approximations"
 DAST536,"Data Analysis with R"
 

@@ -295,7 +295,6 @@ class GrandAlpha:
         return totalPenalties
     
     def anneal(self, initialsch, Tinitial):
-        # TODO: once the penalties hit 0, this should just stop running
         Tmin = 0.1
         tau = 1e4
 
@@ -314,6 +313,11 @@ class GrandAlpha:
 
             schnew = self.StepSchedule(sch)
             penaltiesnew = self.accumulatePenalties(schnew)
+            if penaltiesnew == 0:
+                print('Penalties hit 0. Ending...')
+                sch = schnew
+                break
+            
             deltaPenalties = penaltiesnew - penalties
 
             # accept the new sch according to Boltzmann factor
@@ -326,7 +330,7 @@ class GrandAlpha:
         return sch
     
     def findOptimalSchedule(self, trials):
-        Tinitial = 100
+        Tinitial = 10
         
         optpenalties = 99999
         for i in range(trials):
