@@ -153,7 +153,7 @@ class AllCourseTimes:
                 dept = 'Chemistry'
             elif code == 'PHYS':
                 dept = 'Physics'
-            elif code == 'MATH' or code == 'STAT' or code == 'DAST' or code == 'DAIC':
+            elif code == 'MATH' or code == 'STAT' or code == 'DAST' or code == 'DAIC' or code == 'DASC':
                 dept = 'Math'
             elif code == 'BIOL' or code == 'ENVS':
                 dept = 'Biology'

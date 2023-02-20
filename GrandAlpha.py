@@ -130,6 +130,8 @@ class GrandAlpha:
         timeConflictsFile.close()
 
     def doTimesConflict(self, time1, time2):
+        if time1 == 'ASY' or time2 == 'ASY':
+            return False
         if time1 == time2:
             return True
         if time1 > time2:
@@ -166,7 +168,8 @@ class GrandAlpha:
             otherTimes = []
             for course in otherCoursesToCheck:
                 if course in sch:
-                    otherTimes.append(sch[course])
+                    if sch[course] != 'ASY':
+                        otherTimes.append(sch[course])
 
             # build a list of times that do not conflict based on the professor's schedule
             possibletimes = []
