@@ -40,7 +40,9 @@ CHEM341,CHEM341L,CHEM344,CHEM344L,CHEM434
 # important biochem conflicts (sophomore courses)
 CHEM248,CHEM248L,BIOL242,BIOL242L
 ##CHEM249,CHEM249L,BIOL331
-# does this list need to be expanded for upper-division courses?
+# include BIOL433 with some upper-division CHEM, specifically CHEM 344 was mentioned
+# does this list need to be expanded for other upper-division courses?
+BIOL433,CHEM344,CHEM344L
 
 # BIOL-CHEM double majors (Jamaurey)
 
@@ -104,7 +106,8 @@ PHYS332,MATH331,PHYS337,PHYS381,PHYS381L,PHYS390;1
 # PHYS-MATH double majors (Martin)
 PHYS332,MATH432,PHYS337,PHYS381,PHYS381L,PHYS390;3
 
-# PHYS-CSCI double majors
+# PHYS-CSCI double majors (Tyler possibly)
+PHYS241,PHYS241L,CSCI337
 
 # PHYS-CHEM double majors (Keslyn)
 
