@@ -427,9 +427,15 @@ class GrandAlpha:
             
             section_note = ""
             if courseid in crosslistingmap:
-                otherCourseid = crosslistingmap[courseid]
-                courseName = CourseTimes.getCourseDeptCode(otherCourseid) + ' ' + CourseTimes.getCourseNum(otherCourseid)
-                section_note = 'Cross Listed as ' + courseName
+                section_note += '"Cross Listed as '
+                otherCourseids = crosslistingmap[courseid]
+                for i in range(len(otherCourseids)):
+                    courseName = CourseTimes.getCourseDeptCode(otherCourseids[i]) + ' ' + CourseTimes.getCourseNum(otherCourseids[i])
+                    if i == 0:
+                        section_note += courseName
+                    else:
+                        section_note += ', ' + courseName
+                section_note += '"'
             
             # get schedule info, but this depends on whether the course is cross listed
             if courseid not in coursesToAdd: # it is the primary of the cross listing or is not cross listed
@@ -447,6 +453,7 @@ class GrandAlpha:
             timeinfo = self.validTimes[timecode]
             
             s = category + ',' + course_code + ',' + hours + ',' + cde + ',' + course_name + ',' + timecode + ',' + timeinfo.day + ',' + timeinfo.start + ',' + timeinfo.end + ',' + building + ',' + room + ',' + instructor + ',' + capacity + ',' + section_note + '\n'
+            
             outfile.write(s)
             
         outfile.close()
@@ -463,7 +470,7 @@ class GrandAlpha:
                         crosslistinglist.append(element)
                     
                     for i in range(len(elements)):
-                        crosslistingmap[elements[i]] = [elements[i] for j in range(len(elements)) if j != i]
+                        crosslistingmap[elements[i]] = [elements[j] for j in range(len(elements)) if j != i]
             crossListingsFile.close()
         else:
             print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
