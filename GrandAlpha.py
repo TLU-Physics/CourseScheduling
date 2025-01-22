@@ -19,7 +19,7 @@ class GrandAlpha:
         validTimesFile.close()
         
         crossListingsFilename = 'CrossListings.txt'
-        coursesToIgnore, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
+        coursesToIgnore, _ = GrandAlpha.loadCrossListings(crossListingsFilename)
         
         # load the information about what courses are being taught
         schinitFile = open(schinitFilename, 'r')
@@ -406,8 +406,9 @@ class GrandAlpha:
         for course in allCoursesList:
             courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
             if courseid in crosslistingmap and courseid not in coursesToAdd:
-                otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
-                allCoursesList.append(otherCourse)
+                otherCourses = GrandAlpha.getCrossListedCourses(course, crosslistingmap)
+                for otherCourse in otherCourses:
+                    allCoursesList.append(otherCourse)
         
         allCoursesList.sort(key = lambda course: self.allCourseTimes.getCourseDept(course) + course)
         
@@ -436,10 +437,10 @@ class GrandAlpha:
                 instructor = self.allFacCourses.getFacNameByCourse(course)
                 category, hours, cde, building, room, capacity = self.allCourseTimes.getCourseInfo(course)
             else: # it is the secondary of the cross listing
-                otherCourse = GrandAlpha.getCrossListedCourse(course, crosslistingmap)
-                timecode = sch[otherCourse]
-                instructor = self.allFacCourses.getFacNameByCourse(otherCourse)
-                category, hours, cde, building, room, capacity = self.allCourseTimes.getCourseInfo(otherCourse)
+                mainCourse = GrandAlpha.getCrossListedCourses(course, crosslistingmap)[0]
+                timecode = sch[mainCourse]
+                instructor = self.allFacCourses.getFacNameByCourse(mainCourse)
+                category, hours, cde, building, room, capacity = self.allCourseTimes.getCourseInfo(mainCourse)
                 category = self.allCourseTimes.getCourseDept(course)
                 hours = "0"
             
@@ -458,16 +459,18 @@ class GrandAlpha:
             for line in crossListingsFile:
                 if len(line.strip()) > 0 and line.strip()[0] != '#':
                     elements = line.strip().split(',')
-                    crosslistinglist.append(elements[1])
-                    crosslistingmap[elements[0]] = elements[1]
-                    crosslistingmap[elements[1]] = elements[0]
+                    for element in elements[1:]:
+                        crosslistinglist.append(element)
+                    
+                    for i in range(len(elements)):
+                        crosslistingmap[elements[i]] = [elements[i] for j in range(len(elements)) if j != i]
             crossListingsFile.close()
         else:
             print('Could not find file', crossListingsFilename, 'so cross listings will not be included')
         
         return crosslistinglist, crosslistingmap
         
-    def getCrossListedCourse(course, crosslistingmap):
+    def getCrossListedCourses(course, crosslistingmap):
         courseid = CourseTimes.getCourseDeptCode(course) + CourseTimes.getCourseNum(course)
         
         hyphenpos = course.find('-')
@@ -475,12 +478,15 @@ class GrandAlpha:
         if hyphenpos > 0:
             sectionNumberPart = course[hyphenpos:]
         
-        othercourseid = crosslistingmap[courseid]
-        return othercourseid + sectionNumberPart
+        othercourseidlist = crosslistingmap[courseid]
+        othercourselist = []
+        for othercourseid in othercourseidlist:
+            othercourselist.append(othercourseid + sectionNumberPart)
+        return othercourselist
     
     def importSch(self, filename):
         crossListingsFilename = 'CrossListings.txt'
-        coursesToIgnore, crosslistingmap = GrandAlpha.loadCrossListings(crossListingsFilename)
+        coursesToIgnore, _ = GrandAlpha.loadCrossListings(crossListingsFilename)
         
         schFile = open(filename, 'r')
         sch = {}
